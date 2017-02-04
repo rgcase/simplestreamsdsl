@@ -144,7 +144,16 @@ object End {
     val stage = Sink.foreach(f)
     lazy val drawLines = List(
       downArrow,
-      s"End $name"
+      s"End foreach $name"
+    )
+  }
+
+  def ignore[In]: End[In] = ignore("")
+  def ignore[In](name: String): End[In] = new End[In] {
+    val stage = Sink.ignore
+    lazy val drawLines = List(
+      downArrow,
+      s"End ignore $name"
     )
   }
 }
