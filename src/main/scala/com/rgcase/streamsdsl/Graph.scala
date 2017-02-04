@@ -45,8 +45,8 @@ sealed trait Middle[In, Out] { self ⇒
   protected[streamsdsl] val drawLines: List[String]
   def draw = drawLines.mkString("\n") + "\n"
 
-  def andThen[Out2](f: Out => Out2): Middle[In, Out2] = andThen(f, "")
-  def andThen[Out2](f: Out => Out2, name: String): Middle[In, Out2] = new Middle[In, Out2] {
+  def andThen[Out2](f: Out ⇒ Out2): Middle[In, Out2] = andThen(f, "")
+  def andThen[Out2](f: Out ⇒ Out2, name: String): Middle[In, Out2] = new Middle[In, Out2] {
     val stage = self.stage.map(f)
     lazy val drawLines = self.drawLines ++ List(
       downArrow,

@@ -14,7 +14,7 @@ concurrently to create another `Middle`, and a `Middle` and an `End` can
 be combined to create an `End`.
 
 ## Examples
-### Linear Graph
+### Linear `Graph`
 
 We'll first see a simple linear `Graph` with a single `Beginning`, `Middle`
 and `End`. Names for each stage are optional.
@@ -69,7 +69,10 @@ val middle2: Middle[Int, String] = Middle.fromFunction((x: Int) => x.toString, "
 val middle: Middle[Int, String] = middle1.andThen(middle2)
 ```
 
-Combining two `Middle`s concurrently is a little more complicated:
+Combining two `Middle`s concurrently is a little more complicated. We use a 
+`MiddleBuilder` to build a set of concurrent `Middle`s, then build them into
+a single `Middle`. For now, it is only possible to combine two `Middle`s at 
+a time:
 ```scala
 val middle1: Middle[Int, String] = Middle.fromFunction((x: Int) => x.toString, "toString")
 val middle2: Middle[Int, Int] = Middle.fromFunction((x: Int) => x + 5, "plus 5")
@@ -89,4 +92,32 @@ val end: End[String] = End.foreach((x: String) => println(x), "println")
 val newEnd: End[Int] = end.from(middle)
 ```
 
+## Drawing the `Graph`
+On any stage, or on a complete `Graph`, call the `draw` method for a visualization of
+the `Graph`:
+
+```scala
+val beginning = Beginning.fromIterator(Iterator.range(0, 5), "range 0 to 5")
+val beginning2 = beginning.to((x: Int) => x + 2, "plus 2")
+val middle1 = Middle.fromFunction((x: Int) => x + 3, "plus 3")
+val middle2 = Middle.fromFunction((x: Int) => x + 5, "plus 5")
+val middle3 = MiddleBuilder.join(
+  middle1,
+  middle2,
+  (x: Int, y: Int) => x + y
+).build()
+val end = End.foreach((x: Int) => println(x), "println")
+val graph = Graph.build(beginning2, middle3, end)
+
+graph.draw
+
+// Beginning range 0 to 5
+// ↓
+// plus 2
+// ↓          ↓
+// plus 3     plus 5
+// ↓
+// End foreach println
+
+```
 
