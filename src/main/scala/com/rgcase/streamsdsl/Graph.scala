@@ -23,13 +23,11 @@ sealed trait Beginning[In] { self ⇒
     )
   }
 
-  def to[Out](middle: Middle[In, Out]): Beginning[Out] = to(middle, "")
-  def to[Out](middle: Middle[In, Out], name: String): Beginning[Out] = new Beginning[Out] {
+  def to[Out](middle: Middle[In, Out]): Beginning[Out] = new Beginning[Out] {
     val stage = self.stage.via(middle.stage)
     lazy val drawLines = self.drawLines ++ List(
-      downArrow,
-      name
-    )
+      downArrow
+    ) ++ middle.drawLines
   }
 
 }
@@ -47,13 +45,20 @@ sealed trait Middle[In, Out] { self ⇒
   protected[streamsdsl] val drawLines: List[String]
   def draw = drawLines.mkString("\n") + "\n"
 
-  def andThen[Out2](middle: Middle[Out, Out2]): Middle[In, Out2] = andThen(middle, "")
-  def andThen[Out2](middle: Middle[Out, Out2], name: String): Middle[In, Out2] = new Middle[In, Out2] {
-    val stage = self.stage.via(middle.stage)
+  def andThen[Out2](f: Out => Out2): Middle[In, Out2] = andThen(f, "")
+  def andThen[Out2](f: Out => Out2, name: String): Middle[In, Out2] = new Middle[In, Out2] {
+    val stage = self.stage.map(f)
     lazy val drawLines = self.drawLines ++ List(
       downArrow,
       name
     )
+  }
+
+  def andThen[Out2](middle: Middle[Out, Out2]): Middle[In, Out2] = new Middle[In, Out2] {
+    val stage = self.stage.via(middle.stage)
+    lazy val drawLines = self.drawLines ++ List(
+      downArrow
+    ) ++ middle.drawLines
   }
 }
 
@@ -124,17 +129,13 @@ sealed trait End[In] { self ⇒
 
   def draw = drawLines.mkString("\n") + "\n"
 
-  def from[From](middle: Middle[From, In]): End[From] = from(middle, "")
-  def from[From](middle: Middle[From, In], name: String): End[From] = new End[From] {
+  def from[From](middle: Middle[From, In]): End[From] = new End[From] {
     val stage =
       middle.stage
         .mapMaterializedValue(_ ⇒ Future.successful(Done))
         .to(self.stage)
 
-    lazy val drawLines = List(
-      downArrow,
-      name
-    ) ++ self.drawLines
+    lazy val drawLines = middle.drawLines ++ self.drawLines
   }
 }
 
